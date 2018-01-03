@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { Environment } from '../models/environment';
 import { CpuStat } from '../models/cpu-stat';
 import { MemoryStat } from '../models/memory-stat';
+import { Pods } from '../models/pods';
 
 @Injectable()
 export class DeploymentsService {
@@ -17,35 +18,66 @@ export class DeploymentsService {
 
   getEnvironments(spaceId: string): Observable<Environment[]> {
     return Observable.of([
-      { environmentId: 'envId-stage', name: 'stage' } as Environment,
-      { environmentId: 'envId-run', name: 'run' } as Environment
+      { name: 'stage' } as Environment,
+      { name: 'run' } as Environment
     ]);
   }
 
-  getPodCount(spaceId: string, environmentId: string): Observable<number> {
-    return Observable
-      .interval(DeploymentsService.POLL_RATE_MS)
-      .distinctUntilChanged()
-      .map(() => Math.floor(Math.random() * 5) + 1);
-  }
-
-  getVersion(spaceId: string, environmentId: string): Observable<string> {
+  getVersion(spaceId: string, environmentName: string): Observable<string> {
     return Observable.of('1.0.2');
   }
 
-  getCpuStat(spaceId: string, environmentId: string): Observable<CpuStat> {
-    return Observable
-      .interval(DeploymentsService.POLL_RATE_MS)
-      .distinctUntilChanged()
-      .map(() => ({ used: Math.floor(Math.random() * 9) + 1, total: 10 } as CpuStat))
-      .startWith({ used: 3, total: 10 } as CpuStat);
+  scalePods(
+    spaceId: string,
+    environmentName: string,
+    applicationId: string,
+    desiredReplicas: number
+  ): Observable<string> {
+    return Observable.of(`Scaled ${applicationId} in ${spaceId}/${environmentName} to ${desiredReplicas} replicas`);
   }
 
-  getMemoryStat(spaceId: string, environmentId: string): Observable<MemoryStat> {
+  getPods(spaceId: string, applicationId: string, environmentName: string): Observable<Pods> {
+    return Observable.of({ pods: [['Running', 2], ['Terminating', 1]], total: 3 } as Pods);
+  }
+
+  getCpuStat(spaceId: string, environmentName: string): Observable<CpuStat> {
     return Observable
       .interval(DeploymentsService.POLL_RATE_MS)
       .distinctUntilChanged()
-      .map(() => ({ used: Math.floor(Math.random() * 156) + 100, total: 256 } as MemoryStat))
-      .startWith({ used: 200, total: 256 } as MemoryStat);
+      .map(() => ({ used: Math.floor(Math.random() * 9) + 1, quota: 10 } as CpuStat))
+      .startWith({ used: 3, quota: 10 } as CpuStat);
   }
+
+  getMemoryStat(spaceId: string, environmentName: string): Observable<MemoryStat> {
+    return Observable
+      .interval(DeploymentsService.POLL_RATE_MS)
+      .distinctUntilChanged()
+      .map(() => ({ used: Math.floor(Math.random() * 156) + 100, quota: 256, units: 'MB' } as MemoryStat))
+      .startWith({ used: 200, quota: 256, units: 'MB' } as MemoryStat);
+  }
+
+  getLogsUrl(spaceId: string, applicationId: string, environmentName: string): Observable<string> {
+    return Observable.of('http://example.com/');
+  }
+
+  getConsoleUrl(spaceId: string, applicationId: string, environmentName: string): Observable<string> {
+    return Observable.of('http://example.com/');
+  }
+
+  getAppUrl(spaceId: string, applicationId: string, environmentName: string): Observable<string> {
+    if (Math.random() > 0.5) {
+      return Observable.of('http://example.com/');
+    } else {
+      return Observable.of('');
+    }
+  }
+
+  deleteApplication(spaceId: string, applicationId: string, environmentName: string): Observable<string> {
+    if (Math.random() > 0.5) {
+      return Observable.of(`Deleted ${applicationId} in ${spaceId} (${environmentName})`);
+    } else {
+      return Observable.throw(`Failed to delete ${applicationId} in ${spaceId} (${environmentName})`);
+    }
+  }
+
 }

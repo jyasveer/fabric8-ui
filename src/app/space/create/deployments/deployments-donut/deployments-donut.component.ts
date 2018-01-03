@@ -1,5 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { debounce } from 'lodash';
+import { debounce, isNumber } from 'lodash';
+import { Observable } from 'rxjs';
+
+import { DeploymentsService } from '../services/deployments.service';
+import { Pods } from '../models/pods';
+import { Environment } from '../models/environment';
 
 @Component({
   selector: 'deployments-donut',
@@ -9,20 +14,39 @@ import { debounce } from 'lodash';
 export class DeploymentsDonutComponent implements OnInit {
 
   @Input() mini: boolean;
+  @Input() spaceId: string;
   @Input() applicationId: string;
+  @Input() environment: Environment;
 
   isIdled = false;
   scalable = true;
-  pods: any;
+  pods: Observable<Pods>;
   desiredReplicas: number;
+  debounceScale = debounce(this.scale, 650);
 
-  private scaleRequestPending = false;
-  private debounceScale = debounce(this.scale, 650);
+  colors = {
+    'Empty': '#030303', // pf-black
+    'Running': '#00b9e4', // pf-light-blue-400
+    'Not Ready': '#beedf9', // pf-light-blue-100
+    'Warning': '#f39d3c', // pf-orange-300
+    'Error': '#cc0000', // pf-red-100
+    'Pulling': '#d1d1d1', // pf-black-300
+    'Pending': '#ededed', // pf-black-200
+    'Succeeded': '#3f9c35', // pf-green-400
+    'Terminating': '#00659c', // pf-blue-500
+    'Unknown': '#f9d67a' // pf-gold-200
+  };
 
-  constructor() { }
+  private replicas: number;
+
+  constructor(
+    private deploymentsService: DeploymentsService
+  ) { }
 
   ngOnInit(): void {
-    this.pods = this.getPods();
+    this.pods = this.deploymentsService.getPods(this.spaceId, this.applicationId, this.environment.name);
+    this.pods.subscribe(pods => this.replicas = pods.total);
+
     this.desiredReplicas = this.getDesiredReplicas();
   }
 
@@ -33,7 +57,6 @@ export class DeploymentsDonutComponent implements OnInit {
     let desired = this.getDesiredReplicas();
     this.desiredReplicas = desired + 1;
 
-    this.scaleRequestPending = true;
     this.debounceScale();
   }
 
@@ -49,34 +72,24 @@ export class DeploymentsDonutComponent implements OnInit {
     let desired = this.getDesiredReplicas();
     this.desiredReplicas = desired - 1;
 
-    this.scaleRequestPending = true;
     this.debounceScale();
   }
 
   getDesiredReplicas(): number {
-    if (this.desiredReplicas !== undefined) {
+    if (isNumber(this.desiredReplicas)) {
       return this.desiredReplicas;
     }
 
-    // TODO: acquire replicas from service
+    if (this.replicas) {
+      return this.replicas;
+    }
 
     return 1;
   }
 
   private scale(): void {
-    // TODO: send service request to scale
+    this.deploymentsService.scalePods(
+      this.spaceId, this.environment.name, this.applicationId, this.desiredReplicas
+    );
   }
-
-  private getPods(): any {
-    return [{
-      status: {
-        phase: 'Running'
-      }
-    }, {
-      status: {
-        phase: 'Terminating'
-      }
-    }];
-  }
-
 }

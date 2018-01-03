@@ -1,6 +1,17 @@
-import { Component, DoCheck, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-
+import {
+  AfterViewInit,
+  AfterViewChecked,
+  Component,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  SimpleChanges
+} from '@angular/core';
 import { debounce, get, isEqual, reject, size, uniqueId } from 'lodash';
+import { Observable } from 'rxjs';
+
+import { Pods } from '../../models/pods';
 
 import * as c3 from 'c3';
 import * as d3 from 'd3';
@@ -10,17 +21,16 @@ import * as d3 from 'd3';
   templateUrl: './deployments-donut-chart.component.html',
   styleUrls: ['./deployments-donut-chart.component.less']
 })
-export class DeploymentsDonutChartComponent implements DoCheck, OnInit, OnChanges, OnDestroy {
+export class DeploymentsDonutChartComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
 
-  @Input() pods: any[];
+  @Input() pods: Pods;
   @Input() mini: boolean;
   @Input() desiredReplicas: number;
   @Input() idled: boolean;
+  @Input() colors: any;
 
   chartId = uniqueId('deployments-donut-chart');
-  podStatusData: any;
-  total: number;
-  debounceUpdate = debounce(this.updateChart, 350, { maxWait: 500 });
+  debounceUpdateChart = debounce(this.updateChart, 350, { maxWait: 500 });
 
   private phases = [
     'Running',
@@ -36,8 +46,6 @@ export class DeploymentsDonutChartComponent implements DoCheck, OnInit, OnChange
 
   private config: any;
   private chart: any;
-
-  private prevPodPhaseCount: any;
 
   constructor() { }
 
@@ -80,21 +88,13 @@ export class DeploymentsDonutChartComponent implements DoCheck, OnInit, OnChange
         type: 'donut',
         groups: [this.phases],
         order: null,
-        colors: {
-          'Empty': '#ffffff', // black
-          'Running': '#00b9e4', // dark blue
-          'Not Ready': '#beedf9', // light blue
-          'Warning': '#f39d3c', // orange
-          'Error': '#d9534f', // red
-          'Pulling': '#d1d1d1', // grey
-          'Pending': '#ededed', // light grey
-          'Succeeded': '#3f9c35', // green
-          'Terminating': '#00659c', // dark blue
-          'Unknown': '#f9d67a' // light yellow
-        },
+        colors: this.colors,
         selection: {
           enabled: false
-        }
+        },
+        columns: [
+          ['Empty', 0]
+        ]
       }
     };
 
@@ -108,17 +108,17 @@ export class DeploymentsDonutChartComponent implements DoCheck, OnInit, OnChange
     }
   }
 
-  ngDoCheck(): void {
-    let podPhaseCount = this.countPodPhases();
-    if (!isEqual(this.prevPodPhaseCount, podPhaseCount)) {
-      this.prevPodPhaseCount = podPhaseCount;
-      this.debounceUpdate(podPhaseCount);
-    }
+  ngAfterViewInit(): void {
+    this.chart = c3.generate(this.config);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (!changes.desiredReplicas.firstChange || !changes.idled.firstChange) {
-      this.updatePodCount();
+    if (changes.pods && !isEqual(changes.pods.previousValue, changes.pods.currentValue)) {
+      this.debounceUpdateChart();
+    }
+    if ((changes.desiredReplicas && !changes.desiredReplicas.firstChange) ||
+      (changes.idled && !changes.idled.firstChange)) {
+      this.updateCountText();
     }
   }
 
@@ -128,92 +128,32 @@ export class DeploymentsDonutChartComponent implements DoCheck, OnInit, OnChange
     }
   }
 
-  private updatePodCount(): void {
-    let pods = reject(this.pods, { status: { phase: 'Failed' } });
-    let total = size(this.pods);
+  private updateCountText(): void {
+    if (!this.mini && this.pods) {
+      let smallText: string;
+      if (isNaN(this.desiredReplicas) || this.desiredReplicas === this.pods.total) {
+        smallText = (this.pods.total === 1) ? 'pod' : 'pods';
+      } else {
+        smallText = `scaling to ${this.desiredReplicas}...`;
+      }
 
-    if (this.mini) {
-      this.total = total;
-      return;
-    }
-
-    let smallText: string;
-    if (isNaN(this.desiredReplicas) || this.desiredReplicas === total) {
-      smallText = (total === 1) ? 'pod' : 'pods';
-    } else {
-      smallText = `scaling to ${this.desiredReplicas}...`;
-    }
-
-    if (this.idled) {
-      this.updateCenterText('Idle');
-    } else {
-      this.updateCenterText(total, smallText);
+      if (this.idled) {
+        this.updateDonutCenterText('Idle');
+      } else {
+        this.updateDonutCenterText(this.pods.total, smallText);
+      }
     }
   }
 
-  private updateChart(countByPhase: any): void {
-    let columns = [];
-    this.phases.forEach((phase) => {
-      columns.push([phase, countByPhase[phase] || 0]);
-    });
-
-    if (!this.chart) {
-      this.config.data.columns = columns;
-      this.chart = c3.generate(this.config);
-    } else {
+  private updateChart(): void {
+    if (this.chart && this.pods) {
+      this.config.data.columns = this.pods.pods;
       this.chart.load(this.config.data);
+      this.updateCountText();
     }
-
-    this.podStatusData = columns;
-
-    this.updatePodCount();
   }
 
-  // TODO : get correct phases
-
-  // private isReady(pod: any): boolean {
-  //   let numReady = this.numContainersReadyFilter(pod);
-  //   let total = size(pod.spec.containers);
-
-  //   return numReady === total;
-  // }
-
-  private getPhase(pod: any): any {
-    // if (this.isTerminatingFilter(pod)) {
-    //   return 'Terminating';
-    // }
-
-    // let warnings = this.podWarningsFilter(pod);
-    // if (some(warnings, { severity: 'error' })) {
-    //   return 'Error';
-    // } else if (isEmpty(warnings)) {
-    //   return 'Warning';
-    // }
-
-    // if (this.isPullingImageFilter(pod)) {
-    //   return 'Pulling';
-    // }
-
-    // Also count running, but not ready, as its own phase.
-    // if (pod.status.phase === 'Running' && !this.isReady(pod)) {
-    //   return 'Not Ready';
-    // }
-
-    return get(pod, 'status.phase', 'Unknown');
-  }
-
-  private countPodPhases(): any {
-    let countByPhase = {};
-
-    this.pods.forEach(pod => {
-      let phase = this.getPhase(pod);
-      countByPhase[phase] = (countByPhase[phase] || 0) + 1;
-    });
-
-    return countByPhase;
-  }
-
-  private updateCenterText(bigText: string | number, smallText?: string | number): void {
+  private updateDonutCenterText(bigText: string | number, smallText?: string | number): void {
     let donutChartTitle;
 
     if (!this.chart) {

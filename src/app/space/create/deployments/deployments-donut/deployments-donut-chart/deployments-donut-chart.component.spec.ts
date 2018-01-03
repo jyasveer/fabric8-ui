@@ -1,103 +1,89 @@
 import {
-  ComponentFixture,
-  TestBed
-} from '@angular/core/testing';
+  Component,
+  ViewChild
+} from '@angular/core';
+import { By } from '@angular/platform-browser';
 
-import { isEqual } from 'lodash';
+import {
+  initContext,
+  TestContext
+} from 'testing/test-context';
+
+import { Observable } from 'rxjs';
 
 import { DeploymentsDonutChartComponent } from './deployments-donut-chart.component';
 
-describe('DeploymentsDonutChartComponent', () => {
-  let component: DeploymentsDonutChartComponent;
-  let fixture: ComponentFixture<DeploymentsDonutChartComponent>;
+@Component({
+  template: `
+    <deployments-donut-chart
+    [colors]="colors"
+    [mini]="mini"
+    [pods]="pods | async"
+    [desiredReplicas]="desiredReplicas"
+    [idled]="isIdled">
+    </deployments-donut-chart>
+    `
+})
+class TestHostComponent {
+  mini = false;
+  pods = Observable.of({ pods: [['Running', 1], ['Terminating', 1]], total: 2 });
+  desiredReplicas = 1;
+  isIdled = false;
+  colors = {
+    'Empty': '#030303', // pf-black
+    'Running': '#00b9e4', // pf-light-blue-400
+    'Not Ready': '#beedf9', // pf-light-blue-100
+    'Warning': '#f39d3c', // pf-orange-300
+    'Error': '#cc0000', // pf-red-100
+    'Pulling': '#d1d1d1', // pf-black-300
+    'Pending': '#ededed', // pf-black-200
+    'Succeeded': '#3f9c35', // pf-green-400
+    'Terminating': '#00659c', // pf-blue-500
+    'Unknown': '#f9d67a' // pf-gold-200
+  };
+}
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      declarations: [DeploymentsDonutChartComponent]
+describe('DeploymentsDonutChartComponent', () => {
+  type Context = TestContext<DeploymentsDonutChartComponent, TestHostComponent>;
+  initContext(DeploymentsDonutChartComponent, TestHostComponent);
+
+  it('should set unique chartId', function (this: Context) {
+    expect(this.testedDirective.chartId).toMatch('deployments-donut-chart.*');
+  });
+
+  it('should not show mini text', function (this: Context) {
+    expect(this.testedDirective.mini).toBe(false);
+    let text = this.fixture.debugElement.query(By.css('deployments-donut-chart-mini-text'));
+    expect(text).toBeFalsy();
+  });
+
+  describe('Mini chart', () => {
+    beforeEach(function (this: Context) {
+      this.hostComponent.mini = true;
+      this.detectChanges();
     });
 
-    fixture = TestBed.createComponent(DeploymentsDonutChartComponent);
-    component = fixture.componentInstance;
+    it('should show mini text', function (this: Context) {
+      expect(this.testedDirective.mini).toBe(true);
+      let text = this.fixture.debugElement.query(By.css('.deployments-donut-chart-mini-text'));
+      expect(text).toBeTruthy();
+      let textEl = text.nativeElement;
+      expect(textEl.innerText).toEqual('2 pods');
+    });
 
-    component.pods = [
-      {
-        status: {
-          phase: 'Running'
-        }
-      }, {
-        status: {
-          phase: 'Terminating'
-        }
-      }
-    ];
-    component.mini = false;
-    component.desiredReplicas = 1;
-    component.idled = false;
+    describe('Mini Idle chart', () => {
+      beforeEach(function (this: Context) {
+        this.hostComponent.isIdled = true;
+        this.detectChanges();
+      });
 
-    fixture.detectChanges();
-    component.debounceUpdate.flush();
-  });
-
-  it('should set unique chartId', () => {
-    expect(component.chartId).toMatch('deployments-donut-chart.*');
-  });
-
-  it('should set podStatusData', () => {
-    let expectedPodStatusData = [
-      ['Running', 1],
-      ['Not Ready', 0],
-      ['Warning', 0],
-      ['Error', 0],
-      ['Pulling', 0],
-      ['Pending', 0],
-      ['Succeeded', 0],
-      ['Terminating', 1],
-      ['Unknown', 0]
-    ];
-    component.debounceUpdate.flush();
-    expect(component.podStatusData).toEqual(expectedPodStatusData);
-  });
-
-  it('should update podStatusData', () => {
-    let expectedPodStatusData = [
-      ['Running', 1],
-      ['Not Ready', 0],
-      ['Warning', 0],
-      ['Error', 0],
-      ['Pulling', 0],
-      ['Pending', 0],
-      ['Succeeded', 0],
-      ['Terminating', 1],
-      ['Unknown', 0]
-    ];
-    component.debounceUpdate.flush();
-    expect(component.podStatusData).toEqual(expectedPodStatusData);
-
-    expectedPodStatusData = [
-      ['Running', 2],
-      ['Not Ready', 0],
-      ['Warning', 0],
-      ['Error', 0],
-      ['Pulling', 0],
-      ['Pending', 0],
-      ['Succeeded', 0],
-      ['Terminating', 0],
-      ['Unknown', 0]
-    ];
-
-    component.pods = [{
-      status: {
-        phase: 'Running'
-      }
-    }, {
-      status: {
-        phase: 'Running'
-      }
-    }];
-
-    fixture.detectChanges();
-    component.debounceUpdate.flush();
-
-    expect(component.podStatusData).toEqual(expectedPodStatusData);
+      it('should show idled text', function (this: Context) {
+        expect(this.testedDirective.idled).toBe(true);
+        let idle = this.fixture.debugElement.query(By.css('.deployments-donut-chart-mini-text'));
+        expect(idle).toBeTruthy();
+        let idleEl = idle.nativeElement;
+        expect(idleEl.innerText).toEqual('Idle');
+      });
+    });
   });
 });
