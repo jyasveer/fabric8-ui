@@ -52,24 +52,64 @@ describe('Service: AppLauncherDependencyCheckService', () => {
     });
   });
 
-  it('validate Project Name', () => {
+  it('validate Project Name to be truthy', () => {
     let valProjectName = appLauncherDependencyCheckService.validateProjectName(dependencyCheck.projectName);
     expect(valProjectName).toBeTruthy();
   });
 
-  it('validate validateArtifact Id', () => {
+  it('validate Project Name to be falsy', () => {
+    let valProjectName = appLauncherDependencyCheckService.validateProjectName('#app-test-1');
+    expect(valProjectName).toBeFalsy();
+  });
+
+  it('validate Project Name to be falsy as length is not satisfied', () => {
+    let valProjectName = appLauncherDependencyCheckService.validateProjectName('ap');
+    expect(valProjectName).toBeFalsy();
+  });
+
+  it('validate Artifact Id to be truthy', () => {
     let valArtifactId = appLauncherDependencyCheckService.validateArtifactId(dependencyCheck.mavenArtifact);
     expect(valArtifactId).toBeTruthy();
   });
 
-  it('validate validateGroupId', () => {
+  it('validate Artifact Id to be falsy', () => {
+    let valArtifactId = appLauncherDependencyCheckService.validateArtifactId('booster.mission-runtime');
+    expect(valArtifactId).toBeFalsy();
+  });
+
+  it('validate Artifact Id to be falsy as length is not satisfied', () => {
+    let valArtifactId = appLauncherDependencyCheckService.validateArtifactId('bo');
+    expect(valArtifactId).toBeFalsy();
+  });
+
+  it('validate GroupId to be truthy', () => {
     let valGroupId = appLauncherDependencyCheckService.validateGroupId(dependencyCheck.groupId);
     expect(valGroupId).toBeTruthy();
   });
 
-  it('validate validateProjectVersion', () => {
+  it('validate GroupId to be falsy', () => {
+    let valGroupId = appLauncherDependencyCheckService.validateGroupId('io.openshift-booster');
+    expect(valGroupId).toBeFalsy();
+  });
+
+  it('validate GroupId to be falsy as length is not satisfied', () => {
+    let valGroupId = appLauncherDependencyCheckService.validateGroupId('io');
+    expect(valGroupId).toBeFalsy();
+  });
+
+  it('validate ProjectVersion to be truthy', () => {
     let valProjectVersion = appLauncherDependencyCheckService.validateProjectVersion(dependencyCheck.projectVersion);
     expect(valProjectVersion).toBeTruthy();
+  });
+
+  it('validate ProjectVersion to be falsy', () => {
+    let valProjectVersion = appLauncherDependencyCheckService.validateProjectVersion('#v.1-0-$');
+    expect(valProjectVersion).toBeFalsy();
+  });
+
+  it('validate ProjectVersion to be falsy as length is not satisfied', () => {
+    let valProjectVersion = appLauncherDependencyCheckService.validateProjectVersion('v.');
+    expect(valProjectVersion).toBeFalsy();
   });
 
 });
