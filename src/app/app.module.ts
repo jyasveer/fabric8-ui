@@ -14,7 +14,7 @@ import { LocalStorageModule } from 'angular-2-local-storage';
 import { MomentModule } from 'angular2-moment';
 import { StackDetailsModule } from 'fabric8-stack-analysis-ui';
 import { RestangularModule } from 'ng2-restangular';
-import { Broadcaster, Logger, Notifications } from 'ngx-base';
+import { Logger, Notifications } from 'ngx-base';
 import { BsDropdownConfig, BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { ModalModule } from 'ngx-bootstrap/modal';
 import {
@@ -34,6 +34,8 @@ import { WidgetsModule } from 'ngx-widgets';
 import { ActionModule } from 'patternfly-ng/action';
 import { EmptyStateModule } from 'patternfly-ng/empty-state';
 import { NotificationModule } from 'patternfly-ng/notification';
+
+import { BootstrapModule } from './bootstrap/bootstrap.module';
 
 import {
   // Base functionality for the runtime console
@@ -107,6 +109,7 @@ import { AddSpaceOverlayModule } from './space/add-space-overlay/add-space-overl
 // About Modal
 import { AboutModalModule } from './layout/about-modal/about-modal.module';
 
+import { FeatureFlagModule } from './feature-flag/feature-flag.module';
 import { FeatureFooterModule } from './feature-flag/notification-footer/feature-footer.module';
 import { GettingStartedService } from './getting-started/services/getting-started.service';
 import { RavenExceptionHandler } from './shared/exception.handler';
@@ -130,6 +133,7 @@ export type StoreType = {
  */
 @NgModule({
   imports: [
+    BootstrapModule,
     // import (in alphabetical order) other modules with the components, directives and pipes
     // needed by the components in this module
     AboutModalModule,
@@ -161,8 +165,9 @@ export type StoreType = {
     StackDetailsModule,
     WidgetsModule,
     StoreModule.forRoot({}),
-    // AppRoutingModule must appear last
-    AppRoutingModule
+    AppRoutingModule,
+    // Must be at the end
+    FeatureFlagModule
   ],
   declarations: [ // declare which components, directives and pipes belong to the module
     AppComponent,
@@ -170,7 +175,6 @@ export type StoreType = {
   ],
   providers: [ // expose our Services and Providers into Angular's dependency injection
     // Broadcaster must come first
-    Broadcaster,
     BsDropdownConfig,
     EventService,
     ENV_PROVIDERS,
