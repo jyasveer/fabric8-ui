@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { OpaqueToken } from '@angular/core';
 
-import { URLProvider } from 'ngx-forge';
+import { URLProvider } from 'ngx-forge-jyas';
 
 import { ApiLocatorService } from '../../../shared/api-locator.service';
 

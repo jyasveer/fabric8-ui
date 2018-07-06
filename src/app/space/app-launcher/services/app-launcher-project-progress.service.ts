@@ -6,7 +6,7 @@ import {
 import {
   HelperService,
   ProjectProgressService
-} from 'ngx-forge';
+} from 'ngx-forge-jyas';
 
 @Injectable()
 export class AppLauncherProjectProgressService implements ProjectProgressService {

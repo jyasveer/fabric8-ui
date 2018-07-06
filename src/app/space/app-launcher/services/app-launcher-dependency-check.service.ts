@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { Context } from 'ngx-fabric8-wit';
-import { DependencyCheck, DependencyCheckService } from 'ngx-forge';
+import { DependencyCheck, DependencyCheckService } from 'ngx-forge-jyas';
 
 import { ContextService } from '../../../shared/context.service';
 import { Application, DeploymentApiService } from '../../create/deployments/services/deployment-api.service';

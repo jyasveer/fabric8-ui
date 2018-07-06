@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 import { Broadcaster, Logger, Notification, Notifications, NotificationType } from 'ngx-base';
 import { PopoverConfig, PopoverModule } from 'ngx-bootstrap/popover';
 import { Context, ProcessTemplate, Space, SpaceNamePipe, SpaceService } from 'ngx-fabric8-wit';
-import { DependencyCheckService } from 'ngx-forge';
+import { DependencyCheckService } from 'ngx-forge-jyas';
 import { Profile, User, UserService } from 'ngx-login-client';
 import { Observable } from 'rxjs/Observable';
 

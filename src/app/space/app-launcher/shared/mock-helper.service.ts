@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { Config } from 'ngx-forge';
+import { Config } from 'ngx-forge-jyas';
 
 @Injectable()
 export class MockHelperService  {

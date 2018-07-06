@@ -11,7 +11,7 @@ import { Broadcaster } from 'ngx-base';
 import { Context, Space } from 'ngx-fabric8-wit';
 import { User, UserService } from 'ngx-login-client';
 
-import { DependencyCheckService } from 'ngx-forge';
+import { DependencyCheckService } from 'ngx-forge-jyas';
 import { ContextService } from '../../shared/context.service';
 import { Application, DeploymentApiService } from '../create/deployments/services/deployment-api.service';
 

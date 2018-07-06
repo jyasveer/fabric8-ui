@@ -17,7 +17,7 @@ import {
   ProjectSummaryService,
   Summary,
   TokenProvider
-} from 'ngx-forge';
+} from 'ngx-forge-jyas';
 
 import { ContextService } from '../../../shared/context.service';
 

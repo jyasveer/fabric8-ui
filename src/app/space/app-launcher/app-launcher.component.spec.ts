@@ -20,7 +20,7 @@ import {
     HelperService,
     TokenProvider,
     URLProvider
-  } from 'ngx-forge';
+  } from 'ngx-forge-jyas';
   import { AUTH_API_URL, AuthenticationService } from 'ngx-login-client';
 
   import { ApiLocatorService } from '../../shared/api-locator.service';

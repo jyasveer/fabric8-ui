@@ -6,7 +6,7 @@ import { Observable } from 'rxjs/Observable';
 import { Context } from 'ngx-fabric8-wit';
 import {
     DependencyCheck
-} from 'ngx-forge';
+} from 'ngx-forge-jyas';
 
 import { DeploymentApiService } from '../../create/deployments/services/deployment-api.service';
 import { AppLauncherDependencyCheckService } from './app-launcher-dependency-check.service';
